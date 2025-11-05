@@ -20,6 +20,7 @@ interface SidebarProps {
 const navigation = [
       { name: 'Dashboard', href: '/', icon: HomeIcon },
       { name: 'Products', href: '/admin/products', icon: CubeIcon },
+      { name: 'Leads', href: '/admin/leads', icon: EnvelopeIcon },
       { name: 'Articles', href: '/admin/articles', icon: DocumentTextIcon },
       { name: 'Media', href: '/admin/media', icon: PhotoIcon },
       { name: 'Audit Logs', href: '/admin/logs', icon: ClipboardDocumentListIcon },
