@@ -19,11 +19,11 @@ interface SidebarProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Products', href: '/products', icon: CubeIcon },
-  { name: 'Articles', href: '/articles', icon: DocumentTextIcon },
-  { name: 'Media', href: '/media', icon: PhotoIcon },
-  { name: 'Users', href: '/users', icon: UsersIcon },
-  { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+  { name: 'Products', href: '/admin/products', icon: CubeIcon },
+  { name: 'Articles', href: '/admin/articles', icon: DocumentTextIcon },
+  { name: 'Media', href: '/admin/media', icon: PhotoIcon },
+  { name: 'Users', href: '/admin/users', icon: UsersIcon },
+  { name: 'Settings', href: '/admin/settings', icon: Cog6ToothIcon },
 ];
 
 export default function Sidebar({ onClose }: SidebarProps) {
