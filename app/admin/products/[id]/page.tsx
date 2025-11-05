@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import useSWR from 'swr';
 import axios from 'axios';
 import dynamic from 'next/dynamic';
+import { createClient } from '@supabase/supabase-js';
 import AdminLayout from '@/components/AdminLayout';
 import { ArrowLeftIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
@@ -16,7 +17,14 @@ const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
+// Initialize Supabase client for uploads
+const supabase = SUPABASE_URL && SUPABASE_ANON_KEY 
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 interface Product {
   id: number;
@@ -207,46 +215,50 @@ export default function EditProductPage() {
     });
 
     try {
-      // Get presigned URL
+      // Get presigned URL from backend
       const presignResponse = await axios.post('/api/admin/presign', {
         filename: file.name,
         contentType,
         method: 'POST',
       });
 
-      const { url, fields } = presignResponse.data;
+      const { fileKey, bucket, publicUrl } = presignResponse.data;
 
-      // Upload to Supabase Storage
-      const formData = new FormData();
-      Object.keys(fields).forEach((key) => {
-        formData.append(key, fields[key]);
-      });
-      formData.append('file', file);
+      // Upload to Supabase Storage using Supabase client library
+      if (!supabase || !fileKey || !bucket) {
+        throw new Error('Supabase configuration missing or file key not provided');
+      }
 
-      await axios.post(url, formData, {
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress((prev) => {
-              const newMap = new Map(prev);
-              const current = newMap.get(fileKey);
-              if (current) {
-                newMap.set(fileKey, { ...current, progress });
-              }
-              return newMap;
-            });
-          }
-        },
+      // Upload file using Supabase client
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileKey, file, {
+          contentType: contentType,
+          upsert: false,
+          cacheControl: '3600',
+        });
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Update progress
+      setUploadProgress((prev) => {
+        const newMap = new Map(prev);
+        const current = newMap.get(fileKey);
+        if (current) {
+          newMap.set(fileKey, { ...current, progress: 100 });
+        }
+        return newMap;
       });
 
       // Attach to product in Strapi (if product exists)
       if (productId) {
-        const fileKey = fields.key || presignResponse.data.fileKey;
         // Use publicUrl from response if available, otherwise construct Supabase URL
-        const fileUrl = presignResponse.data.publicUrl || 
-          (fileKey && process.env.NEXT_PUBLIC_SUPABASE_URL
-            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'uploads'}/${fileKey}`
-            : url);
+        const finalFileUrl = publicUrl || 
+          (fileKey && SUPABASE_URL
+            ? `${SUPABASE_URL}/storage/v1/object/public/${bucket || 'uploads'}/${fileKey}`
+            : '');
 
         // Get the product to check existing media
         const productResponse = await axios.get(
@@ -267,17 +279,17 @@ export default function EditProductPage() {
           const existingImages = currentProduct.attributes.images?.data || [];
           updatePayload.images = [
             ...existingImages.map((img: any) => img.id),
-            { url: fileUrl, name: file.name },
+            { url: finalFileUrl, name: file.name },
           ];
         } else if (type === 'glb') {
-          updatePayload.glb = { url: fileUrl, name: file.name };
+          updatePayload.glb = { url: finalFileUrl, name: file.name };
         } else if (type === 'usdz') {
-          updatePayload.usdz = { url: fileUrl, name: file.name };
+          updatePayload.usdz = { url: finalFileUrl, name: file.name };
         } else if (type === 'cad') {
           const existingCad = currentProduct.attributes.cad_files?.data || [];
           updatePayload.cad_files = [
             ...existingCad.map((file: any) => file.id),
-            { url: fileUrl, name: file.name },
+            { url: finalFileUrl, name: file.name },
           ];
         }
 
@@ -307,12 +319,12 @@ export default function EditProductPage() {
       });
 
       // Update GLB URL if GLB file
-      if (type === 'glb' && presignResponse.data.fileKey) {
+      if (type === 'glb' && fileKey) {
         // Use publicUrl from response if available, otherwise construct Supabase URL
-        const fileUrl = presignResponse.data.publicUrl || 
-          (presignResponse.data.fileKey && process.env.NEXT_PUBLIC_SUPABASE_URL
-            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'uploads'}/${presignResponse.data.fileKey}`
-            : url);
+        const fileUrl = publicUrl || 
+          (fileKey && SUPABASE_URL
+            ? `${SUPABASE_URL}/storage/v1/object/public/${bucket || 'uploads'}/${fileKey}`
+            : '');
         setGlbUrl(fileUrl);
       }
 

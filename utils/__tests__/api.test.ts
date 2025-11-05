@@ -16,6 +16,10 @@ describe('api utilities', () => {
 
   describe('apiFetch', () => {
     it('should fetch data successfully', async () => {
+      // Set API token for this test
+      const originalToken = process.env.NEXT_PUBLIC_API_TOKEN;
+      process.env.NEXT_PUBLIC_API_TOKEN = 'test-token';
+      
       const mockData = { data: [{ id: 1, name: 'Test' }] };
       (fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -34,6 +38,9 @@ describe('api utilities', () => {
         }
       );
       expect(result).toEqual(mockData);
+      
+      // Restore original token
+      process.env.NEXT_PUBLIC_API_TOKEN = originalToken;
     });
 
     it('should handle paths with leading slash', async () => {

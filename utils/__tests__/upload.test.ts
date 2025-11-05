@@ -3,7 +3,7 @@ import { sanitizeFilename, generateFileKey, formatFileSize, validateFileType, va
 describe('upload utilities', () => {
   describe('sanitizeFilename', () => {
     it('should sanitize filename with special characters', () => {
-      expect(sanitizeFilename('test file (1).jpg')).toBe('test_file__1__jpg');
+      expect(sanitizeFilename('test file (1).jpg')).toBe('test_file__1_.jpg');
       expect(sanitizeFilename('product@name#123.png')).toBe('product_name_123.png');
     });
 
@@ -34,7 +34,7 @@ describe('upload utilities', () => {
 
     it('should sanitize filename in key', () => {
       const key = generateFileKey('test file (1).jpg');
-      expect(key).toMatch(/test_file__1__jpg$/);
+      expect(key).toMatch(/test_file__1_\.jpg$/);
     });
   });
 
