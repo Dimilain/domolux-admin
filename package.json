@@ -1,0 +1,40 @@
+{
+  "name": "domolux-admin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@google/model-viewer": "^4.1.0",
+    "@headlessui/react": "^2.2.9",
+    "@heroicons/react": "^2.2.0",
+    "@react-three/fiber": "^9.4.0",
+    "autoprefixer": "^10.4.21",
+    "axios": "^1.13.2",
+    "js-cookie": "^3.0.5",
+    "next": "16.0.1",
+    "next-auth": "^4.24.13",
+    "postcss": "^8.5.6",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-hook-form": "^7.66.0",
+    "swr": "^2.3.6",
+    "three": "^0.181.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^4.1.16",
+    "typescript": "^5"
+  }
+}
