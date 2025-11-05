@@ -542,6 +542,12 @@ export default function EditProductPage() {
           </div>
           <div className="flex items-center space-x-2">
             <button
+              onClick={() => router.push(`/admin/logs?entity=product&entityId=${productId}`)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-slate-700 hover:bg-gray-50 transition-colors"
+            >
+              View History
+            </button>
+            <button
               onClick={handleSaveDraft}
               disabled={isSaving || isPublishing}
               className="px-6 py-2 border border-gray-300 rounded-lg text-slate-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
