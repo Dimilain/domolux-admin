@@ -4,9 +4,8 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import axios from 'axios';
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
-const AWS_BUCKET = process.env.AWS_BUCKET;
-const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
-const AWS_CLOUDFRONT_URL = process.env.AWS_CLOUDFRONT_URL; // Optional: CloudFront distribution URL
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'uploads';
 
 interface PresignRequestBody {
   filename: string;
@@ -76,21 +75,10 @@ export async function POST(request: NextRequest) {
         
         // Construct public URL from fileKey
         const fileKey = strapiData.fields?.key || strapiData.fileKey;
-        if (fileKey) {
-          // Use CloudFront URL if available, otherwise construct S3 URL
-          if (AWS_CLOUDFRONT_URL) {
-            publicUrl = `${AWS_CLOUDFRONT_URL}/${fileKey}`;
-          } else if (AWS_BUCKET) {
-            publicUrl = `https://${AWS_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${fileKey}`;
-          } else {
-            // Fallback: try to extract from upload URL
-            const urlMatch = uploadUrl.match(/https?:\/\/([^\/]+)/);
-            if (urlMatch) {
-              publicUrl = `https://${urlMatch[1]}/${fileKey}`;
-            } else {
-              publicUrl = uploadUrl;
-            }
-          }
+        if (fileKey && strapiData.publicUrl) {
+          publicUrl = strapiData.publicUrl;
+        } else if (fileKey && SUPABASE_URL) {
+          publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${fileKey}`;
         } else {
           publicUrl = uploadUrl;
         }
@@ -100,20 +88,10 @@ export async function POST(request: NextRequest) {
         
         // Construct public URL from fileKey
         const fileKey = strapiData.fileKey;
-        if (fileKey) {
-          if (AWS_CLOUDFRONT_URL) {
-            publicUrl = `${AWS_CLOUDFRONT_URL}/${fileKey}`;
-          } else if (AWS_BUCKET) {
-            publicUrl = `https://${AWS_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${fileKey}`;
-          } else {
-            // Extract bucket from uploadUrl
-            const urlMatch = uploadUrl.match(/https?:\/\/([^\/]+)/);
-            if (urlMatch) {
-              publicUrl = `https://${urlMatch[1]}/${fileKey}`;
-            } else {
-              publicUrl = uploadUrl;
-            }
-          }
+        if (fileKey && strapiData.publicUrl) {
+          publicUrl = strapiData.publicUrl;
+        } else if (fileKey && SUPABASE_URL) {
+          publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${fileKey}`;
         } else {
           publicUrl = uploadUrl;
         }
@@ -121,7 +99,9 @@ export async function POST(request: NextRequest) {
         // Fallback: use Strapi response as-is
         uploadUrl = strapiData.url || strapiData.uploadUrl || '';
         fields = strapiData.fields || {};
-        publicUrl = strapiData.publicUrl || uploadUrl;
+        publicUrl = strapiData.publicUrl || (strapiData.fileKey && SUPABASE_URL 
+          ? `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${strapiData.fileKey}`
+          : uploadUrl);
       }
 
       // Return standardized response

@@ -216,7 +216,7 @@ export default function EditProductPage() {
 
       const { url, fields } = presignResponse.data;
 
-      // Upload to S3
+      // Upload to Supabase Storage
       const formData = new FormData();
       Object.keys(fields).forEach((key) => {
         formData.append(key, fields[key]);
@@ -242,8 +242,11 @@ export default function EditProductPage() {
       // Attach to product in Strapi (if product exists)
       if (productId) {
         const fileKey = fields.key || presignResponse.data.fileKey;
-        const s3BaseUrl = url.replace(/\/$/, ''); // Remove trailing slash
-        const fileUrl = `${s3BaseUrl}/${fileKey}`;
+        // Use publicUrl from response if available, otherwise construct Supabase URL
+        const fileUrl = presignResponse.data.publicUrl || 
+          (fileKey && process.env.NEXT_PUBLIC_SUPABASE_URL
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'uploads'}/${fileKey}`
+            : url);
 
         // Get the product to check existing media
         const productResponse = await axios.get(
@@ -305,8 +308,11 @@ export default function EditProductPage() {
 
       // Update GLB URL if GLB file
       if (type === 'glb' && presignResponse.data.fileKey) {
-        const s3BaseUrl = url.replace(/\/$/, '');
-        const fileUrl = `${s3BaseUrl}/${presignResponse.data.fileKey}`;
+        // Use publicUrl from response if available, otherwise construct Supabase URL
+        const fileUrl = presignResponse.data.publicUrl || 
+          (presignResponse.data.fileKey && process.env.NEXT_PUBLIC_SUPABASE_URL
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'uploads'}/${presignResponse.data.fileKey}`
+            : url);
         setGlbUrl(fileUrl);
       }
 
