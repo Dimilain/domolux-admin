@@ -544,7 +544,7 @@ export default function ProductsPage() {
                             )}
                           </button>
                           <button
-                            onClick={() => router.push(`/admin/products/${product.id}/edit`)}
+                            onClick={() => router.push(`/admin/products/${product.id}`)}
                             className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
                             title="Edit"
                           >

@@ -239,21 +239,50 @@ export default function EditProductPage() {
         },
       });
 
-      // Attach to product in Strapi
+      // Attach to product in Strapi (if product exists)
       if (productId) {
         const fileKey = fields.key || presignResponse.data.fileKey;
-        const fileUrl = `${url}${fileKey}`;
+        const s3BaseUrl = url.replace(/\/$/, ''); // Remove trailing slash
+        const fileUrl = `${s3BaseUrl}/${fileKey}`;
 
-        // Call Strapi to attach media
-        await axios.post(
+        // Get the product to check existing media
+        const productResponse = await axios.get(
+          `${STRAPI_URL}/api/products/${productId}?populate=*`,
+          {
+            headers: {
+              Authorization: `Bearer ${jwt}`,
+            },
+          }
+        );
+
+        const currentProduct = productResponse.data.data;
+
+        // Prepare update payload based on file type
+        let updatePayload: any = {};
+
+        if (type === 'image') {
+          const existingImages = currentProduct.attributes.images?.data || [];
+          updatePayload.images = [
+            ...existingImages.map((img: any) => img.id),
+            { url: fileUrl, name: file.name },
+          ];
+        } else if (type === 'glb') {
+          updatePayload.glb = { url: fileUrl, name: file.name };
+        } else if (type === 'usdz') {
+          updatePayload.usdz = { url: fileUrl, name: file.name };
+        } else if (type === 'cad') {
+          const existingCad = currentProduct.attributes.cad_files?.data || [];
+          updatePayload.cad_files = [
+            ...existingCad.map((file: any) => file.id),
+            { url: fileUrl, name: file.name },
+          ];
+        }
+
+        // Update product with new media
+        await axios.put(
           `${STRAPI_URL}/api/products/${productId}`,
           {
-            data: {
-              [type === 'image' ? 'images' : type === 'glb' ? 'glb' : type === 'usdz' ? 'usdz' : 'cad_files']:
-                type === 'image' || type === 'cad'
-                  ? [{ url: fileUrl, name: file.name }]
-                  : { url: fileUrl, name: file.name },
-            },
+            data: updatePayload,
           },
           {
             headers: {
@@ -276,7 +305,8 @@ export default function EditProductPage() {
 
       // Update GLB URL if GLB file
       if (type === 'glb' && presignResponse.data.fileKey) {
-        const fileUrl = `${url}${presignResponse.data.fileKey}`;
+        const s3BaseUrl = url.replace(/\/$/, '');
+        const fileUrl = `${s3BaseUrl}/${presignResponse.data.fileKey}`;
         setGlbUrl(fileUrl);
       }
 
@@ -392,7 +422,7 @@ export default function EditProductPage() {
             'Content-Type': 'application/json',
           },
         });
-        router.push(`/admin/products/${response.data.data.id}/edit`);
+        router.push(`/admin/products/${response.data.data.id}`);
       } else {
         await axios.put(`${STRAPI_URL}/api/products/${productId}`, payload, {
           headers: {
@@ -417,7 +447,22 @@ export default function EditProductPage() {
     try {
       const payload = {
         data: {
-          ...formData,
+          name: formData.name,
+          sku: formData.sku,
+          slug: formData.slug,
+          shortDesc: formData.shortDesc,
+          longDesc: formData.longDesc,
+          price: formData.price ? parseFloat(formData.price) : null,
+          currency: formData.currency,
+          category: formData.category,
+          tags: formData.tags,
+          dimensions: {
+            width: formData.dimensions.width ? parseFloat(formData.dimensions.width) : null,
+            depth: formData.dimensions.depth ? parseFloat(formData.dimensions.depth) : null,
+            height: formData.dimensions.height ? parseFloat(formData.dimensions.height) : null,
+            unit: formData.dimensions.unit,
+          },
+          finishes: formData.finishes,
           publishedAt: new Date().toISOString(),
         },
       };
@@ -429,7 +474,7 @@ export default function EditProductPage() {
             'Content-Type': 'application/json',
           },
         });
-        router.push(`/admin/products/${response.data.data.id}/edit`);
+        router.push(`/admin/products/${response.data.data.id}`);
       } else {
         await axios.put(`${STRAPI_URL}/api/products/${productId}`, payload, {
           headers: {
@@ -820,7 +865,10 @@ export default function EditProductPage() {
                   {product?.attributes.images?.data && (
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       {product.attributes.images.data.map((img) => (
-                        <div key={img.id} className="relative w-full h-24 rounded-lg overflow-hidden bg-gray-100">
+                        <div
+                          key={img.id}
+                          className="relative w-full h-24 rounded-lg overflow-hidden bg-gray-100"
+                        >
                           <Image
                             src={`${STRAPI_URL}${img.attributes.url}`}
                             alt={img.attributes.name}
