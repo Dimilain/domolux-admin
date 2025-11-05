@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
@@ -9,7 +11,24 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Show loading state while checking authentication
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated (handled by middleware, but double-check)
+  if (status === 'unauthenticated') {
+    router.push('/login');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

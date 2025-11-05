@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import {
   HomeIcon,
   CubeIcon,
@@ -67,8 +68,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
         <button
           className="flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-slate-700 hover:bg-gray-100 hover:text-midnight transition-colors"
           onClick={() => {
-            // Handle logout
-            console.log('Logout');
+            signOut({ callbackUrl: '/login' });
           }}
         >
           <ArrowRightOnRectangleIcon className="w-5 h-5" />

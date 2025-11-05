@@ -1,6 +1,7 @@
 'use client';
 
 import { Bars3Icon, BellIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 
 interface TopbarProps {
@@ -8,7 +9,17 @@ interface TopbarProps {
 }
 
 export default function Topbar({ onMenuClick }: TopbarProps) {
+  const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const userName = session?.user?.name || 'Admin User';
+  const userEmail = session?.user?.email || 'admin@domolux.com';
+  const userInitials = userName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
@@ -52,11 +63,11 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           {/* User menu */}
           <div className="flex items-center space-x-3">
             <div className="hidden md:block text-right">
-              <p className="text-sm font-medium text-midnight">Admin User</p>
-              <p className="text-xs text-slate-600">admin@domolux.com</p>
+              <p className="text-sm font-medium text-midnight">{userName}</p>
+              <p className="text-xs text-slate-600">{userEmail}</p>
             </div>
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-white font-medium text-sm">AU</span>
+              <span className="text-white font-medium text-sm">{userInitials}</span>
             </div>
           </div>
         </div>
