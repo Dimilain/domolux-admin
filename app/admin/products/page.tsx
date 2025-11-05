@@ -256,9 +256,20 @@ export default function ProductsPage() {
               {pagination ? `Total: ${pagination.total} products` : 'Loading...'}
             </p>
           </div>
-          <button className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors">
-            Add Product
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => router.push('/admin/products/import')}
+              className="bg-gray-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Import CSV
+            </button>
+            <button
+              onClick={() => router.push('/admin/products/new')}
+              className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Add Product
+            </button>
+          </div>
         </div>
 
         {/* Search and Filters */}
