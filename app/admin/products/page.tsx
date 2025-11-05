@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import useSWR from 'swr';
 import axios from 'axios';
@@ -73,6 +74,7 @@ const fetcher = async (url: string, token: string) => {
 };
 
 export default function ProductsPage() {
+  const router = useRouter();
   const { data: session } = useSession();
   const jwt = (session?.user as any)?.jwt;
 
@@ -542,6 +544,7 @@ export default function ProductsPage() {
                             )}
                           </button>
                           <button
+                            onClick={() => router.push(`/admin/products/${product.id}/edit`)}
                             className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
                             title="Edit"
                           >
